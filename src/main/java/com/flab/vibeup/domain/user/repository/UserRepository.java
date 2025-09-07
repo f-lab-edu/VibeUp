@@ -1,5 +1,6 @@
-package com.flab.vibeup.domain.user;
+package com.flab.vibeup.domain.user.repository;
 
+import com.flab.vibeup.domain.user.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

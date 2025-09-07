@@ -1,4 +1,4 @@
-package com.flab.vibeup.domain.user;
+package com.flab.vibeup.domain.user.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
