@@ -18,11 +18,6 @@ public class UserService {
 
     @Transactional
     public UserResponse signup(UserSignupRequest req) {
-        //중복 체크 & 비즈니스로직
-        userRepository.findByEmail(req.email())
-                .ifPresent(u -> { throw new IllegalArgumentException("이미 사용중인 이메일입니다."); });
-        userRepository.findByNickname(req.nickname())
-                .ifPresent(u -> { throw new IllegalArgumentException("이미 사용중인 닉네임입니다."); } );
         String hashed = passwordEncoder.encode(req.password());
         User user = User.builder()
                 .email(req.email())
