@@ -23,6 +23,10 @@ spring:
         default_batch_fetch_size: 100
     show-sql: true                  # 콘솔에 SQL 출력 (dev 전용)
 
+jwt:
+  secret: "aUCYJ7HwUTSjUqs6dvbZxu6Cf+XyOkO3yhDGT3LTwHc="
+  access-validity-seconds: 3600
+
 
 # Actuator(헬스 등) 개발에서만 노출
 management:
