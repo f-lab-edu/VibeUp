@@ -5,25 +5,19 @@ import com.flab.vibeup.domain.user.dto.LoginRequest;
 import com.flab.vibeup.domain.user.dto.LoginResponse;
 import com.flab.vibeup.domain.user.entity.User;
 import com.flab.vibeup.domain.user.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
 
 @Service
+@RequiredArgsConstructor
 public class AuthService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
-
-    public AuthService(UserRepository userRepository,
-                       PasswordEncoder passwordEncoder,
-                       JwtTokenProvider jwtTokenProvider) {
-        this.userRepository = userRepository;
-        this.passwordEncoder = passwordEncoder;
-        this.jwtTokenProvider = jwtTokenProvider;
-    }
 
     public LoginResponse login(LoginRequest request) {
         User user = userRepository.findByEmail(request.email())
