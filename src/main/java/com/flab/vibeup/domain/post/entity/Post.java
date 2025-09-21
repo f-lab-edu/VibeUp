@@ -2,9 +2,7 @@ package com.flab.vibeup.domain.post.entity;
 
 import com.flab.vibeup.domain.user.entity.User;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -12,7 +10,11 @@ import java.util.List;
 
 @Entity
 @Getter
+@Setter
+@AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Table(name = "post")
+@Builder
 public class Post {
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
