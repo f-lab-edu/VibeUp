@@ -3,6 +3,7 @@ package com.flab.vibeup.domain.post.service;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.flab.vibeup.domain.post.dto.PostCreateRequest;
+import com.flab.vibeup.domain.post.dto.PostReadResponse;
 import com.flab.vibeup.domain.post.entity.MusicVendor;
 import com.flab.vibeup.domain.post.entity.Post;
 import com.flab.vibeup.domain.post.repository.PostRepository;
@@ -56,5 +57,39 @@ class PostServiceTest {
     assertThat(savedPost.getMusicUrl()).isEqualTo(request.musicUrl());
     assertThat(savedPost.getHashtags()).containsExactly("감성", "추천");
     assertThat(savedPost.getVendor()).isEqualTo(MusicVendor.YOUTUBE_MUSIC);
+  }
+
+  @Test
+  @DisplayName("포스트 ID로 조회 시, 해당 게시글이 반환된다")
+  void getPostById_shouldReturnPost() {
+    // given
+    User user =
+            User.builder()
+                    .email("postTest@example.com")
+                    .password("secure1234")
+                    .name("HyeonsunJung")
+                    .nickname("testUser2")
+                    .build();
+    userRepository.save(user);
+
+    PostCreateRequest request =
+            new PostCreateRequest(
+                    MusicVendor.YOUTUBE_MUSIC,
+                    "https://youtube.com/testmusic2",
+                    "또 다른 노래 추천!",
+                    List.of("드라이브", "신나는"));
+
+    Long savedPostId = postService.createPost(request, user.getId());
+
+    // when
+    PostReadResponse foundPost = postService.readPost(savedPostId);
+
+    // then
+    assertThat(foundPost).isNotNull();
+    assertThat(foundPost.postId()).isEqualTo(savedPostId);
+    assertThat(foundPost.musicUrl()).isEqualTo(request.musicUrl());
+    assertThat(foundPost.vendor()).isEqualTo(request.vendor());
+    assertThat(foundPost.hashtags()).containsExactlyElementsOf(request.hashtags());
+    assertThat(foundPost.userId()).isEqualTo(user.getId());
   }
 }
