@@ -1,12 +1,15 @@
 package com.flab.vibeup.domain.post.service;
 
 import com.flab.vibeup.domain.post.dto.PostCreateRequest;
+import com.flab.vibeup.domain.post.dto.PostListResponse;
 import com.flab.vibeup.domain.post.dto.PostReadResponse;
 import com.flab.vibeup.domain.post.entity.Post;
 import com.flab.vibeup.domain.post.repository.PostRepository;
 import com.flab.vibeup.domain.user.entity.User;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,5 +42,21 @@ public class PostService {
             .orElseThrow(() -> new EntityNotFoundException("해당 게시글이 존재하지 않습니다."));
 
     return PostReadResponse.from(post);
+  }
+
+  @Transactional(readOnly = true)
+  public Page<PostListResponse> getPostList(Pageable pageable) {
+    return postRepository
+        .findAll(pageable)
+        .map(
+            post ->
+                PostListResponse.builder()
+                    .postId(post.getId())
+                    .musicUrl(post.getMusicUrl())
+                    .vendor(post.getVendor())
+                    .caption(post.getCaption())
+                    .userNickname(post.getUser().getNickname())
+                    .createdAt(post.getCreatedAt())
+                    .build());
   }
 }

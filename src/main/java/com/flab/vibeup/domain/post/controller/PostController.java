@@ -1,11 +1,16 @@
 package com.flab.vibeup.domain.post.controller;
 
 import com.flab.vibeup.domain.post.dto.PostCreateRequest;
+import com.flab.vibeup.domain.post.dto.PostListResponse;
 import com.flab.vibeup.domain.post.dto.PostReadResponse;
 import com.flab.vibeup.domain.post.service.PostService;
 import com.flab.vibeup.global.auth.CustomUserDetails;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -27,5 +32,13 @@ public class PostController {
     public ResponseEntity<PostReadResponse> readPost(@PathVariable Long postId) {
         PostReadResponse response = postService.readPost(postId);
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping
+    public ResponseEntity<Page<PostListResponse>> getPostList(
+            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC)
+            Pageable pageable) {
+        Page<PostListResponse> postList = postService.getPostList(pageable);
+        return ResponseEntity.ok(postList);
     }
 }
