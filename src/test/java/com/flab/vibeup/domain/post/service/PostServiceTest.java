@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.flab.vibeup.domain.post.dto.PostCreateRequest;
 import com.flab.vibeup.domain.post.dto.PostListResponse;
 import com.flab.vibeup.domain.post.dto.PostReadResponse;
+import com.flab.vibeup.domain.post.dto.PostUpdateRequest;
 import com.flab.vibeup.domain.post.entity.MusicVendor;
 import com.flab.vibeup.domain.post.entity.Post;
 import com.flab.vibeup.domain.post.repository.PostRepository;
@@ -123,5 +124,57 @@ class PostServiceTest {
     assertThat(postPage.getNumber()).isEqualTo(0);
     assertThat(postPage.getContent().getFirst().musicUrl())
         .startsWith("https://youtube.com/testmusic");
+  }
+
+  @Test
+  @DisplayName("게시글 수정 요청 시, 게시글 정보가 업데이트된다")
+  void updatePost_shouldUpdatePostFields() {
+    // given
+    PostCreateRequest createRequest =
+        new PostCreateRequest(
+            MusicVendor.YOUTUBE_MUSIC,
+            "https://youtube.com/testmusic-update",
+            "원래 캡션",
+            List.of("태그1"));
+    Long savedPostId = postService.createPost(createRequest, savedUser.getId());
+
+    // when
+    PostUpdateRequest updateRequest =
+        new PostUpdateRequest(
+            "수정된 캡션",
+            List.of("수정태그1", "수정태그2"),
+            MusicVendor.YOUTUBE_MUSIC,
+            "https://youtube.com/testmusic-updated-url");
+    postService.updatePost(savedPostId, updateRequest, savedUser.getId());
+
+    Post updatedPost =
+        postRepository
+            .findById(savedPostId)
+            .orElseThrow(() -> new IllegalStateException("Post not found"));
+
+    // then
+    assertThat(updatedPost.getCaption()).isEqualTo("수정된 캡션");
+    assertThat(updatedPost.getHashtags()).containsExactly("수정태그1", "수정태그2");
+    assertThat(updatedPost.getMusicUrl()).isEqualTo("https://youtube.com/testmusic-updated-url");
+  }
+
+  @Test
+  @DisplayName("게시글 삭제 요청 시, 해당 게시글이 삭제된다")
+  void deletePost_shouldRemovePost() {
+    // given
+    PostCreateRequest createRequest =
+        new PostCreateRequest(
+            MusicVendor.YOUTUBE_MUSIC,
+            "https://youtube.com/testmusic-delete",
+            "삭제할 캡션",
+            List.of("태그1"));
+    Long savedPostId = postService.createPost(createRequest, savedUser.getId());
+
+    // when
+    postService.deletePost(savedPostId, savedUser.getId());
+
+    // then
+    boolean exists = postRepository.existsById(savedPostId);
+    assertThat(exists).isFalse();
   }
 }
