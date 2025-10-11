@@ -90,4 +90,16 @@ public class PostService {
     }
     postRepository.delete(post);
   }
+
+  @Transactional(readOnly = true)
+  public Page<PostListResponse> getFeeds(Pageable pageable) {
+    return postRepository.findAllByOrderByCreatedAtDesc(pageable).map(PostListResponse::from);
+  }
+
+  @Transactional(readOnly = true)
+  public Page<PostListResponse> getFeedsByUser(Long userId, Pageable pageable) {
+    return postRepository
+        .findAllByUserIdOrderByCreatedAtDesc(userId, pageable)
+        .map(PostListResponse::from);
+  }
 }

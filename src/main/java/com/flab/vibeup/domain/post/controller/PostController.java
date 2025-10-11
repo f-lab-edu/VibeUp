@@ -60,4 +60,15 @@ public class PostController {
     postService.deletePost(postId, userDetails.getUserId());
     return ResponseEntity.noContent().build();
   }
+
+  @GetMapping("/feeds")
+  public ResponseEntity<Page<PostListResponse>> getFeeds(Pageable pageable) {
+    return ResponseEntity.ok(postService.getFeeds(pageable));
+  }
+
+  @GetMapping("/feeds/users/{userId}")
+  public ResponseEntity<Page<PostListResponse>> getFeedsByUser(
+      @PathVariable Long userId, Pageable pageable) {
+    return ResponseEntity.ok(postService.getFeedsByUser(userId, pageable));
+  }
 }
