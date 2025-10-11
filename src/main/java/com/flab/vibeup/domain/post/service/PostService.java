@@ -1,5 +1,7 @@
 package com.flab.vibeup.domain.post.service;
 
+import com.flab.vibeup.domain.follow.entity.Follow;
+import com.flab.vibeup.domain.follow.repository.FollowRepository;
 import com.flab.vibeup.domain.post.dto.PostCreateRequest;
 import com.flab.vibeup.domain.post.dto.PostListResponse;
 import com.flab.vibeup.domain.post.dto.PostReadResponse;
@@ -11,14 +13,19 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class PostService {
 
   private final PostRepository postRepository;
+  private final FollowRepository followRepository;
+  private final RedisTemplate<String, String> redisTemplate;
 
   @Transactional
   public Long createPost(PostCreateRequest request, Long userId) {
@@ -34,6 +41,15 @@ public class PostService {
             .build();
 
     Post savedPost = postRepository.save(post);
+
+    // 🔥 나를 팔로우하는 유저들에게 feed push (Fan-out)
+    List<Follow> followers = followRepository.findAllByFollowee(user);
+    for (Follow follow : followers) {
+      Long followerId = follow.getFollower().getId();
+      String key = "feed:" + followerId;
+      redisTemplate.opsForList().leftPush(key, savedPost.getId().toString());
+    }
+
     return savedPost.getId();
   }
 
