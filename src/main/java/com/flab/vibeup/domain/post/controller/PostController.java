@@ -11,10 +11,15 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Objects;
 
 @RestController
 @RequestMapping("/api/posts")
@@ -22,6 +27,7 @@ import org.springframework.web.bind.annotation.*;
 public class PostController {
 
   private final PostService postService;
+  private final RedisTemplate<String, String> redisTemplate;
 
   @PostMapping
   public ResponseEntity<Void> createPost(
@@ -59,5 +65,22 @@ public class PostController {
       @PathVariable Long postId, @AuthenticationPrincipal CustomUserDetails userDetails) {
     postService.deletePost(postId, userDetails.getUserId());
     return ResponseEntity.noContent().build();
+  }
+
+  @GetMapping("/feeds")
+  public ResponseEntity<List<Long>> getFeeds(Authentication authentication) {
+    CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+    Long userId = userDetails.getUserId();
+
+    List<String> postIdStrings = redisTemplate.opsForList().range("feed:" + userId, 0, 9); // 최근 10개
+    List<Long> postIds = Objects.requireNonNull(postIdStrings).stream().map(Long::valueOf).toList();
+
+    return ResponseEntity.ok(postIds);
+  }
+
+  @GetMapping("/feeds/users/{userId}")
+  public ResponseEntity<Page<PostListResponse>> getFeedsByUser(
+      @PathVariable Long userId, Pageable pageable) {
+    return ResponseEntity.ok(postService.getFeedsByUser(userId, pageable));
   }
 }

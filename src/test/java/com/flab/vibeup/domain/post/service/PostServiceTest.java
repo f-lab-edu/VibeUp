@@ -12,6 +12,7 @@ import com.flab.vibeup.domain.post.repository.PostRepository;
 import com.flab.vibeup.domain.user.entity.User;
 import com.flab.vibeup.domain.user.repository.UserRepository;
 import jakarta.transaction.Transactional;
+import java.time.LocalDateTime;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -176,5 +177,87 @@ class PostServiceTest {
     // then
     boolean exists = postRepository.existsById(savedPostId);
     assertThat(exists).isFalse();
+  }
+
+  @Test
+  @DisplayName("피드 조회 요청 시, 최신순으로 정렬된 게시글 목록이 반환된다")
+  void getFeed_shouldReturnPostsInDescendingOrder() {
+    // given
+    for (int i = 1; i <= 5; i++) {
+      PostCreateRequest request =
+          new PostCreateRequest(
+              MusicVendor.YOUTUBE_MUSIC,
+              "https://youtube.com/music" + i,
+              "추천곡 " + i,
+              List.of("HashTag" + i));
+      postService.createPost(request, savedUser.getId());
+      try {
+        Thread.sleep(50); // 정렬을 위한 시간 확보
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+      }
+    }
+
+    // when
+    Pageable pageable = PageRequest.of(0, 3); // 최신 3개
+    Page<PostListResponse> feed = postService.getFeeds(pageable);
+
+    // then
+    assertThat(feed).isNotNull();
+    assertThat(feed.getContent()).hasSize(3);
+
+    List<PostListResponse> contents = feed.getContent();
+    for (int i = 0; i < contents.size() - 1; i++) {
+      assertThat(contents.get(i).createdAt()).isAfterOrEqualTo(contents.get(i + 1).createdAt());
+    }
+  }
+
+  @DisplayName("유저 기반 최신순 피드 조회 테스트")
+  @Test
+  void getFeedByUserId_ShouldReturnFeedsSortedByCreatedAtDesc() {
+    // given
+    Post post1 = Post.builder()
+            .user(savedUser)
+            .musicUrl("https://test.com/1")
+            .vendor(MusicVendor.YOUTUBE_MUSIC)
+            .caption("caption1")
+            .hashtags(List.of("tag1", "tag2"))
+            .createdAt(LocalDateTime.now().minusMinutes(10))
+            .build();
+
+    Post post2 = Post.builder()
+            .user(savedUser)
+            .musicUrl("https://test.com/2")
+            .vendor(MusicVendor.YOUTUBE_MUSIC)
+            .caption("caption2")
+            .hashtags(List.of("tag1", "tag2"))
+            .createdAt(LocalDateTime.now().minusMinutes(5))
+            .build();
+
+    Post post3 = Post.builder()
+            .user(savedUser)
+            .musicUrl("https://test.com/3")
+            .vendor(MusicVendor.YOUTUBE_MUSIC)
+            .caption("caption3")
+            .hashtags(List.of("tag1", "tag2"))
+            .createdAt(LocalDateTime.now())
+            .build();
+
+    postRepository.saveAll(List.of(post1, post2, post3));
+
+    Pageable pageable = PageRequest.of(0, 3); // 최신 3개
+
+    // when
+    Page<PostListResponse> feedPage = postService.getFeedsByUser(savedUser.getId(), pageable);
+
+    // then
+    assertThat(feedPage).hasSize(3);
+
+    List<PostListResponse> feed = feedPage.getContent();
+    assertThat(feed.get(0).createdAt()).isAfter(feed.get(1).createdAt());
+    assertThat(feed.get(1).createdAt()).isAfter(feed.get(2).createdAt());
+
+    assertThat(feed.get(0).musicUrl()).isEqualTo("https://test.com/3");
+    assertThat(feed.get(2).musicUrl()).isEqualTo("https://test.com/1");
   }
 }
